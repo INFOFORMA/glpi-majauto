@@ -39,6 +39,14 @@ if (isset($_POST['enregistrer'])) {
         'sauvegarde_dossier'   => trim((string) ($_POST['sauvegarde_dossier'] ?? '')),
         'sauvegarde_retention' => (string) max(1, (int) ($_POST['sauvegarde_retention'] ?? 5)),
     ]);
+    // La planification ne vit pas dans la configuration du greffon mais dans la
+    // tâche automatique elle-même : on l'y écrit, et on relit ce qui a été pris.
+    $applique = Update::planifier(
+        (int) ($_POST['frequence'] ?? WEEK_TIMESTAMP),
+        (int) ($_POST['heure_debut'] ?? 2),
+        (int) ($_POST['heure_fin'] ?? 6)
+    );
+    Session::addMessageAfterRedirect("Planification : $applique.", false, INFO);
     Session::addMessageAfterRedirect("Configuration enregistrée.", false, INFO);
     Html::redirect($page);
 }
@@ -115,6 +123,40 @@ echo "<div class='mb-3'>";
 echo "<label class='form-label'>Adresse à prévenir</label>";
 echo "<input type='email' name='destinataire' class='form-control' value='" . htmlspecialchars($destinataire) . "'>";
 echo "<div class='form-hint'>Laisser vide pour n'envoyer aucun courriel. Le rapport reste consultable ci-dessous.</div>";
+echo "</div>";
+
+echo "<hr>";
+echo "<h4>Quand la vérification a lieu</h4>";
+
+$plan = Update::planification();
+
+echo "<div class='mb-3'>";
+echo "<label class='form-label'>Fréquence</label>";
+echo "<select name='frequence' class='form-select' style='max-width:22rem'>";
+foreach (Update::frequences() as $secondes => $libelle) {
+    echo "<option value='" . (int) $secondes . "'"
+       . ($plan['frequence'] === (int) $secondes ? " selected" : "") . ">"
+       . htmlspecialchars($libelle) . "</option>";
+}
+echo "</select>";
+echo "<div class='form-hint'>Une mise à jour repérée n'est appliquée qu'au passage suivant. "
+   . "En hebdomadaire, un correctif publié le mardi attend jusqu'au lundi.</div>";
+echo "</div>";
+
+echo "<div class='mb-3'>";
+echo "<label class='form-label'>Plage horaire autorisée</label>";
+echo "<div class='d-flex align-items-center' style='gap:.5rem;max-width:22rem'>";
+echo "<span>de</span>";
+echo "<input type='number' name='heure_debut' class='form-control' min='0' max='24' style='max-width:6rem'"
+   . " value='" . (int) $plan['debut'] . "'>";
+echo "<span>h à</span>";
+echo "<input type='number' name='heure_fin' class='form-control' min='0' max='24' style='max-width:6rem'"
+   . " value='" . (int) $plan['fin'] . "'>";
+echo "<span>h</span>";
+echo "</div>";
+echo "<div class='form-hint'>⚠️ La plage borne la fréquence : « toutes les heures » entre 2 h et 6 h "
+   . "ne donne que quatre passages par nuit. Pour un contrôle réellement horaire, mettre <strong>0 à 24</strong>. "
+   . "Une plage vide ou inversée est ramenée à 0–24 plutôt que d'empêcher toute exécution en silence.</div>";
 echo "</div>";
 
 echo "<hr>";

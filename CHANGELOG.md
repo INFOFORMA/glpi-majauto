@@ -1,12 +1,19 @@
-# Journal des versions
 
-## 1.0.0 — 21/08/2026
+## 1.0.1 — 21/08/2026
 
-Première publication.
+**Correctif : une mise à jour téléchargée n'était jamais appliquée.**
 
-- Relevé de l'état d'activation de chaque greffon **avant** mise à jour, et **rétablissement après** : un greffon actif le redevient, un greffon volontairement éteint le reste.
-- Vérification que la version a réellement changé et que le greffon est bien rechargé — `plugin:install` laisse le greffon désactivé sans le signaler.
-- Sauvegarde préalable de la base, **vérifiée jusqu'à sa ligne finale** ; la mise à jour est annulée si l'archive n'est pas exploitable.
-- Mot de passe de base transmis par fichier temporaire en 600, jamais par la ligne de commande. Archive produite en 0600.
-- Mode « signaler seulement » par défaut, liste d'exclusions, rotation des archives.
-- Alerte par courriel sur échec, avec bouton d'essai pour vérifier la chaîne d'alerte.
+Le téléchargement dépose les fichiers, mais GLPI ne « voit » la nouvelle version
+qu'après synchronisation de la base avec le disque. Sans ce `checkStates()`,
+l'installation migrait une version que la base croyait inchangée : rien ne
+bougeait, et le contrôle concluait — à juste titre — que la mise à jour n'avait
+pas pris.
+
+Plus grave : la synchronisation place le greffon en état « non à jour », et dans
+cet état **GLPI cesse de le charger**. Un abandon à ce stade laissait donc le
+greffon hors service, sans message.
+
+**Nouveau : la fréquence de vérification est réglable** depuis la page de
+configuration (horaire, 6 heures, quotidienne, hebdomadaire, mensuelle), avec la
+plage horaire autorisée. Une plage vide ou inversée est ramenée à 0–24 plutôt
+que d'empêcher toute exécution en silence.

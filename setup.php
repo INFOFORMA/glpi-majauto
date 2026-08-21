@@ -21,7 +21,7 @@
  * @license GPLv3+
  */
 
-define('PLUGIN_MAJAUTO_VERSION', '1.0.0');
+define('PLUGIN_MAJAUTO_VERSION', '1.0.1');
 define('PLUGIN_MAJAUTO_MIN_GLPI', '11.0');
 define('PLUGIN_MAJAUTO_MAX_GLPI', '12.0');
 

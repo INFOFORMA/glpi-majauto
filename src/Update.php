@@ -210,6 +210,20 @@ class Update extends CommonGLPI
         }
 
         $plugin = new Plugin();
+
+        // 🔴 ÉTAPE INDISPENSABLE, ET FACILE À OUBLIER.
+        // Le téléchargement dépose les fichiers, mais GLPI ne « voit » pas la
+        // nouvelle version tant que la base n'a pas été synchronisée avec le
+        // disque. Sans cela, install() migre une version que la base croit
+        // inchangée : rien ne bouge, et le contrôle conclut à tort que la mise
+        // à jour n'a pas pris. Constaté le 21/08/2026 sur metademands 3.6.2 →
+        // 3.6.3 : fichiers en 3.6.3 sur le disque, base restée en 3.6.2.
+        //
+        // Pire : la synchronisation place le greffon en état « non à jour », et
+        // dans cet état GLPI CESSE DE LE CHARGER. Un abandon à ce stade laisse
+        // donc le greffon hors service, sans message.
+        $plugin->checkStates(true);
+
         if (!$plugin->getFromDBbyDir($cle)) {
             return "plugin introuvable en base après téléchargement";
         }
@@ -424,6 +438,86 @@ class Update extends CommonGLPI
             ];
         }
         return $etat;
+    }
+
+    // ── Planification ────────────────────────────────────────────────────────
+
+    /** Fréquences proposées, en secondes. */
+    public static function frequences(): array
+    {
+        return [
+            HOUR_TIMESTAMP      => "Toutes les heures",
+             6 * HOUR_TIMESTAMP => "Toutes les 6 heures",
+            DAY_TIMESTAMP       => "Tous les jours",
+            WEEK_TIMESTAMP      => "Toutes les semaines",
+            MONTH_TIMESTAMP     => "Tous les mois",
+        ];
+    }
+
+    /**
+     * Applique la planification à la tâche automatique.
+     *
+     * La fenêtre horaire compte autant que la fréquence : régler « toutes les
+     * heures » en laissant une fenêtre 2 h – 6 h ne donne que quatre passages
+     * par nuit. On écrit donc les deux ensemble, jamais l'une sans l'autre.
+     *
+     * @return string ce qui a réellement été appliqué, relu en base.
+     */
+    public static function planifier(int $frequence, int $heure_debut, int $heure_fin): string
+    {
+        global $DB;
+
+        $connues = array_keys(self::frequences());
+        if (!in_array($frequence, $connues, true)) {
+            $frequence = WEEK_TIMESTAMP;
+        }
+        $heure_debut = max(0, min(24, $heure_debut));
+        $heure_fin   = max(0, min(24, $heure_fin));
+        if ($heure_fin <= $heure_debut) {
+            // Une fenêtre vide empêcherait toute exécution, en silence.
+            $heure_debut = 0;
+            $heure_fin   = 24;
+        }
+
+        $DB->update('glpi_crontasks', [
+            'frequency' => $frequence,
+            'hourmin'   => $heure_debut,
+            'hourmax'   => $heure_fin,
+        ], ['name' => 'majauto']);
+
+        foreach ($DB->request([
+            'SELECT' => ['frequency', 'hourmin', 'hourmax'],
+            'FROM'   => 'glpi_crontasks',
+            'WHERE'  => ['name' => 'majauto'],
+        ]) as $t) {
+            return sprintf(
+                '%s, entre %sh et %sh',
+                self::frequences()[(int) $t['frequency']] ?? $t['frequency'] . ' s',
+                $t['hourmin'],
+                $t['hourmax']
+            );
+        }
+        return 'planification introuvable';
+    }
+
+    /** Planification courante, lue dans la tâche elle-même. */
+    public static function planification(): array
+    {
+        global $DB;
+
+        foreach ($DB->request([
+            'SELECT' => ['frequency', 'hourmin', 'hourmax', 'lastrun'],
+            'FROM'   => 'glpi_crontasks',
+            'WHERE'  => ['name' => 'majauto'],
+        ]) as $t) {
+            return [
+                'frequence' => (int) $t['frequency'],
+                'debut'     => (int) $t['hourmin'],
+                'fin'       => (int) $t['hourmax'],
+                'derniere'  => $t['lastrun'],
+            ];
+        }
+        return ['frequence' => WEEK_TIMESTAMP, 'debut' => 2, 'fin' => 6, 'derniere' => null];
     }
 
     public static function listeExclus(string $brut): array
