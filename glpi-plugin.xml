@@ -25,7 +25,7 @@ This plugin records each plugin's activation state **before**, applies the updat
 
 **Settings.** Report-only mode by default, exclusion list for plugins whose update implies a schema migration, e-mail alert on failure with a test button, backup directory and retention.
 
-A weekly automatic task is registered, scheduled between 2 and 6 AM.</en>
+**Scheduling is configurable**: hourly, every 6 hours, daily, weekly or monthly, with the allowed time window. An empty or inverted window falls back to 0-24 rather than silently preventing any run.</en>
          <fr>GLPI signale qu'une mise a jour de greffon existe, mais ne l'applique jamais. La commande `marketplace:upgrade` les applique bien, mais traite tous les greffons d'un bloc, sans simulation et sans filet.
 
 **Le probleme que ca resout.** L'enchainement `marketplace:download` puis `plugin:install` **laisse le greffon desactive**, et GLPI ne le signale pas : le greffon cesse simplement d'etre charge. Sur l'instance qui a motive ce developpement, cinq greffons se sont ainsi retrouves en etat "installe / non active" apres une mise a jour - dont celui qui alimentait le collecteur de courriels. L'arrivee des tickets se serait interrompue sans que rien ne l'indique.
@@ -42,7 +42,7 @@ Ce greffon releve l'etat d'activation de chaque greffon **avant**, applique la m
 
 **Reglages.** Mode "signaler seulement" par defaut, liste d'exclusions pour les greffons dont la mise a jour implique une migration de schema, alerte par courriel sur echec avec bouton d'essai, dossier de sauvegarde et retention.
 
-Une tache automatique hebdomadaire est enregistree, planifiee entre 2 h et 6 h.</fr>
+**La planification est reglable** : horaire, 6 heures, quotidienne, hebdomadaire ou mensuelle, avec la plage horaire autorisee. Une plage vide ou inversee est ramenee a 0-24 plutot que d'empecher toute execution en silence.</fr>
       </long>
    </description>
    <homepage>https://github.com/INFOFORMA/glpi-majauto</homepage>
