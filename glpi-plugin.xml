@@ -1,0 +1,83 @@
+<root>
+   <name>Automatic plugin updates</name>
+   <key>majauto</key>
+   <state>beta</state>
+   <logo>https://raw.githubusercontent.com/INFOFORMA/glpi-majauto/main/logo.png</logo>
+   <description>
+      <short>
+         <en>Applies plugin updates while restoring their activation state, with a verified database backup taken first.</en>
+         <fr>Applique les mises a jour de greffons en retablissant leur etat d'activation, avec sauvegarde prealable verifiee.</fr>
+      </short>
+      <long>
+         <en>GLPI reports that a plugin update exists, but never applies it. The `marketplace:upgrade` console command does apply them, but handles every plugin at once, with no dry run and no safety net.
+
+**The problem this solves.** Running `marketplace:download` then `plugin:install` **leaves the plugin deactivated**, and GLPI does not report it: the plugin simply stops being loaded. On the instance that motivated this work, five plugins ended up in an "installed / not activated" state after an update - including the one feeding the mail collector. Incoming tickets would have stopped arriving with nothing to indicate it.
+
+This plugin records each plugin's activation state **before**, applies the update, **restores that state after**, then checks that the version really changed and that the plugin is active again.
+
+**What it will not compromise on.**
+
+*It never changes a plugin's activation state.* A deliberately disabled plugin stays disabled; an active one becomes active again. Re-enabling what had been switched off would be just as wrong as switching off what was running.
+
+*An unverified backup is worth nothing.* An interrupted `mysqldump` produces a perfectly valid gzip file that is truncated. The archive is therefore read back to its final marker; if that marker is missing, no update is applied.
+
+*The database password never goes through the command line* - process arguments are readable by any account on the machine. It goes through a temporary file with 600 permissions, deleted immediately. The resulting dump is written with 0600 permissions: a database copy contains password hashes and API tokens.
+
+**Settings.** Report-only mode by default, exclusion list for plugins whose update implies a schema migration, e-mail alert on failure with a test button, backup directory and retention.
+
+A weekly automatic task is registered, scheduled between 2 and 6 AM.</en>
+         <fr>GLPI signale qu'une mise a jour de greffon existe, mais ne l'applique jamais. La commande `marketplace:upgrade` les applique bien, mais traite tous les greffons d'un bloc, sans simulation et sans filet.
+
+**Le probleme que ca resout.** L'enchainement `marketplace:download` puis `plugin:install` **laisse le greffon desactive**, et GLPI ne le signale pas : le greffon cesse simplement d'etre charge. Sur l'instance qui a motive ce developpement, cinq greffons se sont ainsi retrouves en etat "installe / non active" apres une mise a jour - dont celui qui alimentait le collecteur de courriels. L'arrivee des tickets se serait interrompue sans que rien ne l'indique.
+
+Ce greffon releve l'etat d'activation de chaque greffon **avant**, applique la mise a jour, **retablit cet etat apres**, puis verifie que la version a reellement change et que le greffon est bien redevenu actif.
+
+**Ce sur quoi il ne transige pas.**
+
+*Il ne modifie jamais l'etat d'activation d'un greffon.* Un greffon volontairement eteint le reste ; un greffon actif le redevient. Reactiver ce qui avait ete eteint serait aussi fautif que d'eteindre ce qui etait actif.
+
+*Une sauvegarde non verifiee vaut zero.* Un `mysqldump` interrompu produit un fichier gzip parfaitement valide, mais tronque. L'archive est donc relue jusqu'a son temoin final ; si ce temoin manque, aucune mise a jour n'est appliquee.
+
+*Le mot de passe de la base ne passe jamais par la ligne de commande* - les arguments d'un processus sont lisibles par tout compte de la machine. Il transite par un fichier temporaire en 600, supprime aussitot. L'archive produite est en 0600 : une copie de base contient les empreintes de mots de passe et les jetons d'API.
+
+**Reglages.** Mode "signaler seulement" par defaut, liste d'exclusions pour les greffons dont la mise a jour implique une migration de schema, alerte par courriel sur echec avec bouton d'essai, dossier de sauvegarde et retention.
+
+Une tache automatique hebdomadaire est enregistree, planifiee entre 2 h et 6 h.</fr>
+      </long>
+   </description>
+   <homepage>https://github.com/INFOFORMA/glpi-majauto</homepage>
+   <download>https://github.com/INFOFORMA/glpi-majauto/releases</download>
+   <issues>https://github.com/INFOFORMA/glpi-majauto/issues</issues>
+   <readme>https://github.com/INFOFORMA/glpi-majauto/blob/main/README.md</readme>
+   <changelog>https://github.com/INFOFORMA/glpi-majauto/blob/main/CHANGELOG.md</changelog>
+   <authors>
+      <author>Infoforma</author>
+   </authors>
+   <versions>
+      <version>
+         <num>1.0.0</num>
+         <compatibility>~11.0</compatibility>
+         <download_url>https://github.com/INFOFORMA/glpi-majauto/releases/download/v1.0.0/majauto-1.0.0.zip</download_url>
+      </version>
+   </versions>
+   <langs>
+      <lang>fr_FR</lang>
+   </langs>
+   <license>GPL v3+</license>
+   <tags>
+      <en>
+         <tag>plugins</tag>
+         <tag>update</tag>
+         <tag>maintenance</tag>
+         <tag>backup</tag>
+         <tag>automation</tag>
+      </en>
+      <fr>
+         <tag>greffons</tag>
+         <tag>mise a jour</tag>
+         <tag>maintenance</tag>
+         <tag>sauvegarde</tag>
+         <tag>automatisation</tag>
+      </fr>
+   </tags>
+</root>
